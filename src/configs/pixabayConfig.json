@@ -1,0 +1,9 @@
+{
+    "PIXABAY_KEY" : "41115082-57084d131d6361bf0a1460296",
+    "PIXABAY_URL" : "https://pixabay.com/api/",
+    "ImagesSettings" : {
+        "image_type" : "photo",
+        "orientation" : "horizontal",
+        "per_page" : 12
+    }
+}

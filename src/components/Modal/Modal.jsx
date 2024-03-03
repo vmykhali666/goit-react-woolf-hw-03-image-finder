@@ -1,12 +1,29 @@
+import React, { Component } from 'react';
 import css from 'styles/Modal.module.css';
 
-export const Modal = ({ imageSetting }) => {
+export class Modal extends Component {
+  componentDidMount() {
+    window.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  handleKeyDown = e => {
+    if (e.code === 'Escape') {
+      this.props.onClose();
+    }
+  };
+
+  render() {
+    const { largeImageURL, alt, onClose } = this.props;
     return (
-        <div className={css.Overlay} onClick={imageSetting.onClose}>
-            <div className={css.Modal}>
-                <img src={imageSetting.Url} alt={imageSetting.Alt} />
-            </div>
+      <div className={css.Overlay} onClick={onClose}>
+        <div className={css.Modal}>
+          <img src={largeImageURL} alt={alt} />
         </div>
+      </div>
     );
-};
-    
+  }
+}

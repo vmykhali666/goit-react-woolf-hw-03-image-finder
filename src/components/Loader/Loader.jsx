@@ -2,6 +2,7 @@ import css from 'styles/Loader.module.css';
 import { Hourglass } from 'react-loader-spinner'
 
 export const Loader = () => {
+  console.log('Loader');
   return (
     <Hourglass
       visible={true}

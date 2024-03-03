@@ -3,6 +3,8 @@ import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Searchbar } from './Searchbar/Searchbar';
 import React, { Component } from 'react';
 import { PixabayApi } from 'helpers/pixabayApi';
+import { Modal } from './Modal/Modal';
+import { Loader } from './Loader/Loader';
 
 export class App extends Component {
   state = {
@@ -10,14 +12,26 @@ export class App extends Component {
     isLoading: false,
     error: null,
     query: '',
+    modalIsOpen: false,
+    imageSetting: {
+      largeImageURL: 'images/default-image.jpg',
+      alt: 'default alt text',
+    },
   };
 
   pixabayApi = new PixabayApi();
 
-  handleImageClick = event => {
+  handleClickOnLink = event => {
     event.preventDefault();
-    console.log('Image clicked');
-  }
+    let href = event.target.dataset.source;
+    this.setState({
+      modalIsOpen: true,
+      imageSetting: {
+        largeImageURL: href,
+        alt: event.target.alt,
+      },
+    });
+  };
   handleSubmit = event => {
     event.preventDefault();
 
@@ -42,6 +56,10 @@ export class App extends Component {
     this.fetchImages(this.state.query, true);
   };
 
+  closeModal = () => {
+    this.setState({ modalIsOpen: false });
+  };
+
   fetchImages = (query, isAdditional = false) => {
     this.pixabayApi
       .fetchImages(query)
@@ -64,14 +82,15 @@ export class App extends Component {
   };
 
   render = () => {
-    const { items, isLoading } = this.state;
+    const { items, isLoading, modalIsOpen } = this.state;
+    const { largeImageURL, alt } = this.state.imageSetting;
 
     return (
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gridGap: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
           paddingBottom: '24px',
         }}
       >
@@ -79,11 +98,27 @@ export class App extends Component {
           onChange={this.handleSearchChange}
           onSubmit={this.handleSubmit}
         />
-        {items.length > 0 && <ImageGallery items={items} />}
-        {items.length > 0 && (
-          <Button onClick={this.handleLoadMore} disabled={isLoading}>
-            {isLoading ? 'Loading...' : 'Load More'}
-          </Button>
+        {this.isLoading ? (
+          <Loader />
+        ) : (
+          items.length > 0 && (
+            <React.Fragment>
+              <ImageGallery
+                items={items}
+                onImageClick={this.handleClickOnLink}
+              />
+              <Button onClick={this.handleLoadMore} disabled={isLoading}>
+                {isLoading ? 'Loading...' : 'Load More'}
+              </Button>
+            </React.Fragment>
+          )
+        )}
+        {modalIsOpen && (
+          <Modal
+            largeImageURL={largeImageURL}
+            alt={alt}
+            onClose={this.closeModal}
+          />
         )}
       </div>
     );

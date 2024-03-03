@@ -37,13 +37,12 @@ export class App extends Component {
 
     const query = event.target.elements.query.value;
 
+    this.pixabayApi.resetPageCount();
+
     this.setState({
       isLoading: true,
       query,
     });
-
-    this.pixabayApi.resetPageCount();
-    this.fetchImages(query, false);
   };
 
   handleSearchChange = event => {
@@ -51,18 +50,26 @@ export class App extends Component {
   };
 
   handleLoadMore = () => {
-    this.setState({ isLoading: true });
     this.pixabayApi.increasePageCount();
-    this.fetchImages(this.state.query, true);
+    this.setState({ isLoading: true });
   };
 
   closeModal = () => {
     this.setState({ modalIsOpen: false });
   };
 
-  fetchImages = (query, isAdditional = false) => {
-    this.pixabayApi
-      .fetchImages(query)
+  componentDidUpdate = (prevProps, prevState) => {
+    if (prevState.query !== this.state.query) {
+      this.fetchImages(false);
+    }
+    else if (this.state.isLoading) {
+      this.fetchImages(true);
+    }
+  };
+
+  fetchImages = async isAdditional => {
+    await this.pixabayApi
+      .fetchImages(this.state.query)
       .then(response =>
         this.setState(prevState => {
           return {
@@ -74,11 +81,11 @@ export class App extends Component {
                   ),
                 ]
               : response.hits,
-            isLoading: false,
           };
         })
       )
-      .catch(error => this.setState({ error, isLoading: false }));
+      .catch(error => this.setState({ error }))
+      .finally(() => this.setState({ isLoading: false }));
   };
 
   render = () => {
@@ -98,7 +105,7 @@ export class App extends Component {
           onChange={this.handleSearchChange}
           onSubmit={this.handleSubmit}
         />
-        {this.isLoading ? (
+        {isLoading ? (
           <Loader />
         ) : (
           items.length > 0 && (

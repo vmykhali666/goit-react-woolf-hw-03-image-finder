@@ -12,23 +12,33 @@ export class App extends Component {
     isLoading: false,
     error: null,
     query: '',
+    page: 1,
     modalIsOpen: false,
+    hasMorePhotos: false,
     imageSetting: {
       largeImageURL: 'images/default-image.jpg',
       alt: 'default alt text',
     },
   };
 
+  componentDidUpdate = (prevProps, prevState) => {
+    if (
+      prevState.query !== this.state.query ||
+      prevState.page !== this.state.page
+    ) {
+      this.fetchImages();
+    }
+  };
+
   pixabayApi = new PixabayApi();
 
-  handleClickOnLink = event => {
-    event.preventDefault();
-    let href = event.target.dataset.source;
+  handleClickOnLink = (href, alt) => {
+    console.log('click on link');
     this.setState({
       modalIsOpen: true,
       imageSetting: {
         largeImageURL: href,
-        alt: event.target.alt,
+        alt,
       },
     });
   };
@@ -37,11 +47,9 @@ export class App extends Component {
 
     const query = event.target.elements.query.value;
 
-    this.pixabayApi.resetPageCount();
-
     this.setState({
-      isLoading: true,
       query,
+      page: 1,
     });
   };
 
@@ -50,46 +58,31 @@ export class App extends Component {
   };
 
   handleLoadMore = () => {
-    this.pixabayApi.increasePageCount();
-    this.setState({ isLoading: true });
+    this.setState({ page: this.state.page + 1 });
   };
 
   closeModal = () => {
     this.setState({ modalIsOpen: false });
   };
 
-  componentDidUpdate = (prevProps, prevState) => {
-    if (prevState.query !== this.state.query) {
-      this.fetchImages(false);
-    }
-    else if (this.state.isLoading) {
-      this.fetchImages(true);
-    }
-  };
-
-  fetchImages = async isAdditional => {
+  fetchImages = async () => {
+    this.setState({ isLoading: true });
     await this.pixabayApi
-      .fetchImages(this.state.query)
-      .then(response =>
+      .fetchImages(this.state.query, this.state.page)
+      .then(response => {
         this.setState(prevState => {
           return {
-            items: isAdditional
-              ? [
-                  ...prevState.items,
-                  ...response.hits.filter(
-                    hit => !prevState.items.some(item => item.id === hit.id)
-                  ),
-                ]
-              : response.hits,
+            items: [...prevState.items, ...response.hits],
+            hasMorePhotos: this.state.page < Math.ceil(response.totalHits / 12),
           };
-        })
-      )
+        });
+      })
       .catch(error => this.setState({ error }))
       .finally(() => this.setState({ isLoading: false }));
   };
 
   render = () => {
-    const { items, isLoading, modalIsOpen } = this.state;
+    const { items, isLoading, modalIsOpen, hasMorePhotos } = this.state;
     const { largeImageURL, alt } = this.state.imageSetting;
 
     return (
@@ -105,21 +98,17 @@ export class App extends Component {
           onChange={this.handleSearchChange}
           onSubmit={this.handleSubmit}
         />
-        {isLoading ? (
-          <Loader />
-        ) : (
-          items.length > 0 && (
-            <React.Fragment>
-              <ImageGallery
-                items={items}
-                onImageClick={this.handleClickOnLink}
-              />
+        {items.length > 0 && (
+          <React.Fragment>
+            <ImageGallery items={items} onImageClick={this.handleClickOnLink} />
+            {hasMorePhotos && (
               <Button onClick={this.handleLoadMore} disabled={isLoading}>
                 {isLoading ? 'Loading...' : 'Load More'}
               </Button>
-            </React.Fragment>
-          )
+            )}
+          </React.Fragment>
         )}
+        {isLoading && <Loader />}
         {modalIsOpen && (
           <Modal
             largeImageURL={largeImageURL}

@@ -42,14 +42,11 @@ export class App extends Component {
       },
     });
   };
-  handleSubmit = event => {
-    event.preventDefault();
-
-    const query = event.target.elements.query.value;
-
+  handleSubmit = queryWord => {
     this.setState({
-      query,
+      query : queryWord,
       page: 1,
+      items: [],
     });
   };
 

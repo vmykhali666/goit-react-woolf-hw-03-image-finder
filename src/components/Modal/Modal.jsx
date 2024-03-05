@@ -19,7 +19,9 @@ export class Modal extends Component {
   render() {
     const { largeImageURL, alt, onClose } = this.props;
     return (
-      <div className={css.Overlay} onClick={onClose}>
+      <div className={css.Overlay} onClick={(e) => {
+        e.target === e.currentTarget && onClose();
+      }}>
         <div className={css.Modal}>
           <img src={largeImageURL} alt={alt} />
         </div>
